@@ -25,21 +25,10 @@
         .highlight { color: #60a5fa; font-weight: bold; }
         .eliminated { text-decoration: line-through; color: #64748b; opacity: 0.5; cursor: default; }
 
-        .footer-logo {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 450px;
-            text-align: center;
-            pointer-events: none;
-        }
-        .footer-logo img {
-            max-width: 150px;
-            height: auto;
-            opacity: 0.8;
-        }
+        .footer-logo { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 450px; text-align: center; pointer-events: none; }
+        .footer-logo img { max-width: 150px; height: auto; opacity: 0.8; }
+        
+        .trust-count { color: #fbbf24; font-size: 12px; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -47,16 +36,15 @@
         <div class="score-box">
             <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px;">TRUST VALUE</div>
             <div id="score-display" style="font-size: 32px; font-weight: bold;">100억</div>
+            <div id="trust-chance-display" class="trust-count">남은 유예 기회: 2회</div>
         </div>
 
         <div id="step-setup" class="screen active">
             <h1 style="text-align: center; margin-top: 40px;">TRUTH MASK</h1>
-            <p class="instruction">플레이 인원을 선택하세요.<br>라이어를 잡을 때까지 게임은 계속됩니다.</p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button class="btn" onclick="setupGame(4)">4명</button>
-                <button class="btn" onclick="setupGame(5)">5명</button>
-                <button class="btn" style="grid-column: span 2;" onclick="setupGame(6)">6명 플레이 시작</button>
-            </div>
+            <p class="instruction">조직 내 숨어든 라이어를 찾아내세요.</p>
+            <button class="btn" onclick="setupGame(4)">4명</button>
+            <button class="btn" onclick="setupGame(5)">5명</button>
+            <button class="btn" style="grid-column: span 2;" onclick="setupGame(6)">6명 플레이 시작</button>
         </div>
 
         <div id="step-check" class="screen">
@@ -85,7 +73,7 @@
             <h2 style="text-align: center;">대응 방식 결정</h2>
             <p class="instruction"><span id="voted-name" class="highlight"></span>님에 대한 팀의 태도는?</p>
             <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('RESPECT', 50)">
-                <span style="color:#60a5fa">신뢰 기반 피드백</span><br><small>비난 없이 솔직한 상황 공유를 정중히 요청합니다.</small>
+                <span style="color:#60a5fa">신뢰 기반 피드백</span><br><small>비난 없이 솔직한 공유를 요청합니다.</small>
             </button>
             <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('DIRECT', 30)">
                 <span style="color:#60a5fa">데이터 중심 검증</span><br><small>객관적인 근거 자료를 요구합니다.</small>
@@ -127,7 +115,7 @@
                 <h2 id="reveal-status"></h2>
                 <p id="reveal-details" style="margin-bottom: 20px;"></p>
                 <hr style="border: 0; border-top: 1px solid #334155; margin-bottom: 20px;">
-                <h3 id="team-diagnosis" style="color: #60a5fa;"></h3>
+                <h3 id="team-diagnosis"></h3>
             </div>
             <button class="btn" onclick="location.reload()">새 게임 시작</button>
         </div>
@@ -141,6 +129,7 @@
         let players = []; 
         let votedIndex = -1, currentPlayerIndex = 0;
         let score = 100, timer, currentStrategy = {};
+        let trustChance = 2; 
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -157,7 +146,7 @@
         function showRole() {
             const p = players[currentPlayerIndex];
             document.getElementById('role-identity').innerText = p.isLiar ? "🤫 당신은 [라이어]" : "📢 당신은 [팀원]";
-            document.getElementById('role-mission').innerText = p.isLiar ? "성과 부진을 숨기고 팀원들의 의심을 피하세요." : "팀 성과가 30% 미달인 비상 상황입니다. 라이어를 찾으세요.";
+            document.getElementById('role-mission').innerText = p.isLiar ? "정체를 숨기세요." : "라이어를 지목하세요.";
             document.getElementById('role-view').style.display = 'block';
             document.getElementById('view-btn').style.display = 'none';
             document.getElementById('next-btn').style.display = 'block';
@@ -214,7 +203,7 @@
         }
 
         function goToAction() {
-            if (votedIndex === -1) return alert("의심 대상을 선택하세요!");
+            if (votedIndex === -1) return alert("대상을 선택하세요!");
             document.getElementById('voted-name').innerText = `플레이어 ${players[votedIndex].id}`;
             showScreen('step-action');
         }
@@ -226,7 +215,6 @@
             document.getElementById('def-start-btn').style.display = 'block';
             document.getElementById('def-skip-btn').style.display = 'none';
             document.getElementById('def-final-btn').style.display = 'none';
-            document.getElementById('defense-timer').innerText = "01:00";
             showScreen('step-defense');
         }
 
@@ -251,10 +239,9 @@
 
         function processResult(isExecute) {
             const target = players[votedIndex];
-            const isActuallyLiar = target.isLiar;
             
             if (isExecute) { 
-                if (isActuallyLiar) { 
+                if (target.isLiar) { 
                     score += currentStrategy.plus;
                     showFinalEnd("라이어 검거 성공!", `플레이어 ${target.id}는 라이어였습니다! 위기를 막아냈습니다.`, true);
                 } else { 
@@ -263,18 +250,21 @@
                     const aliveCount = players.filter(p => !p.isEliminated).length;
                     if (aliveCount <= 2) { 
                         score -= 50;
-                        showFinalEnd("조직 붕괴 (패배)", `무고한 팀원들을 너무 많이 잃었습니다. 진짜 라이어는 살아남았습니다.`, false);
+                        showFinalEnd("조직 붕괴 (패배)", `무고한 팀원들을 너무 많이 잃었습니다.`, false);
                     } else {
-                        showRoundResult("무고한 팀원 제외", `플레이어 ${target.id}는 팀원이었습니다. 남은 ${aliveCount}명이서 다시 시작합니다.`);
+                        showRoundResult("팀원 제외됨", `플레이어 ${target.id}는 팀원이었습니다. 정체가 탄로 났습니다.`);
                     }
                 }
             } else { 
-                if (isActuallyLiar) {
-                    score -= 20; 
-                    showRoundResult("라이어 생존", "라이어를 놓쳤습니다. 팀 내 불신이 싹틉니다.");
+                trustChance--;
+                document.getElementById('trust-chance-display').innerText = `남은 유예 기회: ${trustChance}회`;
+
+                if (trustChance < 0) {
+                    showFinalEnd("상황을 방관하는 팀", "결정을 미루는 사이 조직의 신뢰는 완전히 파괴되었습니다.", false, true);
                 } else {
-                    score += 10; 
-                    showRoundResult("신뢰 유지", "팀원을 지켜내며 신뢰를 다졌습니다.");
+                    if (target.isLiar) score -= 20;
+                    else score += 10;
+                    showRoundResult("신뢰 유지", `대상을 다시 믿기로 했습니다. 정체는 공개되지 않았습니다. (남은 기회: ${trustChance}회)`);
                 }
             }
             document.getElementById('score-display').innerText = score + "억";
@@ -287,32 +277,26 @@
             showScreen('step-round-result');
         }
 
-        function showFinalEnd(status, detail, success) {
+        function showFinalEnd(status, detail, success, isBystander = false) {
             document.getElementById('reveal-status').innerText = status;
             document.getElementById('reveal-details').innerText = detail;
             
-            // 점수 기반 팀 진단 로직
             let diagnosis = "";
             let color = "";
 
-            if (score >= 80) {
-                diagnosis = "진단 결과: [혁신하는 팀] 🌟";
-                color = "#10b981"; // 초록
-            } else if (score >= 60) {
-                diagnosis = "진단 결과: [위험한 팀] ⚠️";
-                color = "#f59e0b"; // 주황
-            } else if (score >= 40) {
-                diagnosis = "진단 결과: [쇠퇴하는 팀] 📉";
-                color = "#f87171"; // 연빨강
+            if (isBystander) {
+                diagnosis = "진단 결과: [상황을 방관하는 팀] 😶";
+                color = "#94a3b8"; // 회색 (방관)
             } else {
-                diagnosis = "진단 결과: [팀 붕괴] 💀";
-                color = "#ef4444"; // 진빨강
+                if (score >= 80) { diagnosis = "진단 결과: [혁신하는 팀] 🌟"; color = "#10b981"; }
+                else if (score >= 60) { diagnosis = "진단 결과: [위험한 팀] ⚠️"; color = "#f59e0b"; }
+                else if (score >= 40) { diagnosis = "진단 결과: [쇠퇴하는 팀] 📉"; color = "#f87171"; }
+                else { diagnosis = "진단 결과: [팀 붕괴] 💀"; color = "#ef4444"; }
             }
 
             document.getElementById('team-diagnosis').innerText = diagnosis;
             document.getElementById('team-diagnosis').style.color = color;
             document.getElementById('result-card').style.borderColor = color;
-            
             showScreen('step-result');
         }
     </script>
