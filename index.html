@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Truth Mask - Survival Mode</title>
+    <title>Truth Mask - Strategic Survival</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #0f172a; color: white; font-family: -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; }
@@ -10,9 +10,9 @@
         .screen { display: none; flex-direction: column; width: 100%; }
         .screen.active { display: flex; }
         .card { background: #1e293b; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid #334155; text-align: center; }
-        .btn { background: #2563eb; color: white; border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; font-size: 16px; }
+        .btn { background: #2563eb; color: white; border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; font-size: 16px; transition: 0.2s; }
         .btn:active { background: #1d4ed8; transform: scale(0.98); }
-        .btn-secondary { background: #334155; text-align: left; height: auto; padding: 15px; }
+        .btn-secondary { background: #475569; text-align: center; }
         .score-box { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 30px; }
         .timer { font-size: 60px; font-weight: bold; margin: 20px 0; color: #f87171; text-align: center; font-family: monospace; }
         .instruction { color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5; text-align: center; }
@@ -25,14 +25,18 @@
 <body>
     <div id="app">
         <div class="score-box">
-            <div style="font-size: 11px; color: #94a3b8;">TRUST ASSET</div>
+            <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px;">ORGANIZATIONAL TRUST</div>
             <div id="score-display" style="font-size: 32px; font-weight: bold;">100억</div>
         </div>
 
         <div id="step-setup" class="screen active">
             <h1 style="text-align: center; margin-top: 40px;">TRUTH MASK</h1>
-            <p class="instruction">플레이 인원을 선택하세요.<br>(라이어를 잡을 때까지 게임은 계속됩니다)</p>
-            <button class="btn" onclick="setupGame(5)">5명 플레이 시작</button>
+            <p class="instruction">플레이 인원을 선택하세요.<br>라이어를 잡을 때까지 게임은 계속됩니다.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button class="btn" onclick="setupGame(4)">4명</button>
+                <button class="btn" onclick="setupGame(5)">5명</button>
+                <button class="btn" style="grid-column: span 2;" onclick="setupGame(6)">6명 플레이 시작</button>
+            </div>
         </div>
 
         <div id="step-check" class="screen">
@@ -42,61 +46,53 @@
                 <p id="role-mission" style="color: #cbd5e1; font-size: 15px;"></p>
             </div>
             <button id="view-btn" class="btn" onclick="showRole()">역할 확인하기</button>
-            <button id="next-btn" class="btn btn-secondary" style="display:none; text-align:center;" onclick="nextPlayer()">다음 사람에게 전달</button>
+            <button id="next-btn" class="btn btn-secondary" style="display:none;" onclick="nextPlayer()">다음 사람에게 전달</button>
         </div>
 
         <div id="step-discuss" class="screen">
             <h2 id="round-title" style="text-align: center; font-size: 18px;">토론 라운드</h2>
             <div id="discuss-timer" class="timer">02:00</div>
-            <p class="instruction">생존자끼리 대화하며 라이어를 찾으세요.</p>
+            <p class="instruction">자유롭게 대화하며 라이어를 추리하세요.</p>
             <button class="btn" onclick="goToVote()">의심 지목하기</button>
         </div>
 
         <div id="step-vote" class="screen">
             <h2 style="text-align: center;">의심 지목</h2>
-            <p class="instruction">생존자 중 라이어로 의심되는 사람을 선택하세요.</p>
             <div id="player-list"></div>
-            <button class="btn" onclick="goToAction()">선택 완료</button>
+            <button class="btn" onclick="goToAction()">지목 완료</button>
         </div>
 
         <div id="step-action" class="screen">
-            <h2 style="text-align: center;">대응 방식 결정</h2>
-            <p class="instruction"><span id="voted-name" class="highlight"></span>님을 어떻게 대하시겠습니까?</p>
-            <button class="btn btn-secondary" onclick="setStrategy('RESPECT', 50, -10)">
-                <span style="color:#60a5fa">신뢰 기반 피드백</span><br>
-                <small>비난 없이 솔직한 상황 공유를 요청합니다.</small>
+            <h2 style="text-align: center;">대응 방식</h2>
+            <p class="instruction"><span id="voted-name" class="highlight"></span>님에 대한 팀의 태도는?</p>
+            <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('RESPECT', 50)">
+                <span style="color:#60a5fa">신뢰 기반 피드백</span><br><small>비난 없이 진실된 소통을 요청합니다.</small>
             </button>
-            <button class="btn btn-secondary" onclick="setStrategy('DIRECT', 30, -20)">
-                <span style="color:#60a5fa">데이터 중심 검증</span><br>
-                <small>객관적인 수치와 근거 자료를 요구합니다.</small>
+            <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('DIRECT', 30)">
+                <span style="color:#60a5fa">데이터 중심 검증</span><br><small>객관적인 근거와 논리를 요구합니다.</small>
             </button>
-            <button class="btn btn-secondary" onclick="setStrategy('SILENCE', 0, -50)">
-                <span style="color:#60a5fa">침묵과 방관</span><br>
-                <small>분위기를 위해 일단 믿어주기로 합니다.</small>
+            <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('SILENCE', 0)">
+                <span style="color:#60a5fa">침묵과 방관</span><br><small>갈등을 피하기 위해 일단 수용합니다.</small>
             </button>
         </div>
 
         <div id="step-defense" class="screen">
             <h2 style="text-align: center;">최후 변론</h2>
             <div class="card">
-                <p style="font-size: 14px; color: #94a3b8;">대응 방식: <span id="chosen-strategy" class="highlight"></span></p>
+                <p style="font-size: 14px; color: #94a3b8;">팀의 대응: <span id="chosen-strategy" class="highlight"></span></p>
                 <div id="defense-timer" class="timer">01:00</div>
-                <p id="defense-instruction" style="font-weight: bold; font-size:14px;"></p>
+                <p id="defense-instruction" style="font-weight: bold;"></p>
             </div>
-            <button id="def-start-btn" class="btn" onclick="startDefenseTimer()">변론 타이머 시작</button>
-            
-            <button id="def-skip-btn" class="btn btn-secondary" style="display:none; text-align:center;" onclick="stopDefenseAndGo()">변론 조기 종료</button>
-            
-            <button id="def-final-btn" class="btn" style="display:none;" onclick="goToFinalVote()">변론 종료 (최종 결정)</button>
+            <button id="def-start-btn" class="btn" onclick="startDefenseTimer()">변론 시작</button>
+            <button id="def-skip-btn" class="btn btn-secondary" style="display:none;" onclick="stopDefenseAndGo()">변론 조기 종료</button>
+            <button id="def-final-btn" class="btn" style="display:none;" onclick="goToFinalVote()">변론 완료 (결정)</button>
         </div>
 
         <div id="step-final" class="screen">
             <h2 style="text-align: center;">최종 결정</h2>
-            <div class="card">
-                <p>변론을 듣고 난 후에도<br><span id="final-target" class="highlight"></span>님을 내보내시겠습니까?</p>
-            </div>
-            <button class="btn" onclick="processResult(true)">네, 내보내겠습니다 (확신)</button>
-            <button class="btn btn-secondary" style="text-align:center" onclick="processResult(false)">아니요, 다시 기회를 주겠습니다</button>
+            <div class="card"><p><span id="final-target" class="highlight"></span>님을 팀에서 제외할까요?</p></div>
+            <button class="btn" onclick="processResult(true)">예 (방출)</button>
+            <button class="btn btn-secondary" onclick="processResult(false)">아니오 (기회 부여)</button>
         </div>
 
         <div id="step-round-result" class="screen">
@@ -104,7 +100,7 @@
                 <h2 id="round-status"></h2>
                 <p id="round-detail"></p>
             </div>
-            <button id="round-continue-btn" class="btn" onclick="nextRound()">다음 라운드 시작</button>
+            <button class="btn" onclick="nextRound()">다음 라운드 시작</button>
         </div>
 
         <div id="step-result" class="screen">
@@ -113,13 +109,13 @@
                 <p id="reveal-details"></p>
             </div>
             <h2 id="end-title" style="text-align: center;"></h2>
-            <button class="btn" onclick="location.reload()">새 게임 시작</button>
+            <button class="btn" onclick="location.reload()">처음으로 돌아가기</button>
         </div>
     </div>
 
     <script>
         let players = []; 
-        let liarIndex, votedIndex = -1, currentPlayerIndex = 0;
+        let votedIndex = -1, currentPlayerIndex = 0;
         let score = 100, timer, currentStrategy = {};
 
         function showScreen(id) {
@@ -127,19 +123,18 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // 1. 완벽 랜덤 셋업
         function setupGame(n) {
-            liarIndex = Math.floor(Math.random() * n);
-            players = [];
-            for(let i=0; i<n; i++) {
-                players.push({ id: i+1, isLiar: (i === liarIndex), isEliminated: false });
-            }
+            const roles = new Array(n).fill('CITIZEN');
+            roles[Math.floor(Math.random() * n)] = 'LIAR';
+            players = roles.map((role, i) => ({ id: i + 1, isLiar: role === 'LIAR', isEliminated: false }));
             showScreen('step-check');
         }
 
         function showRole() {
             const p = players[currentPlayerIndex];
             document.getElementById('role-identity').innerText = p.isLiar ? "🤫 당신은 [라이어]" : "📢 당신은 [시민]";
-            document.getElementById('role-mission').innerText = p.isLiar ? "성과 부진을 숨기고 팀을 안심시키세요." : "오늘의 진실: 실제 성과가 30% 미달인 상황입니다.";
+            document.getElementById('role-mission').innerText = p.isLiar ? "성과 부진을 숨기고 팀원들의 의심을 피하세요." : "팀 성과가 30% 미달인 비상 상황입니다. 라이어를 찾으세요.";
             document.getElementById('role-view').style.display = 'block';
             document.getElementById('view-btn').style.display = 'none';
             document.getElementById('next-btn').style.display = 'block';
@@ -157,16 +152,17 @@
             }
         }
 
+        // 2. 라운드 루프 시스템
         function nextRound() {
             const aliveCount = players.filter(p => !p.isEliminated).length;
             document.getElementById('round-title').innerText = `토론 라운드 (생존: ${aliveCount}명)`;
             showScreen('step-discuss');
-            document.getElementById('discuss-timer').innerText = "02:00";
             startTimer('discuss-timer', 120, goToVote);
         }
 
         function startTimer(id, sec, callback) {
             let time = sec;
+            clearInterval(timer);
             timer = setInterval(() => {
                 time--;
                 let m = Math.floor(time / 60), s = time % 60;
@@ -182,7 +178,7 @@
             players.forEach((p, i) => {
                 const d = document.createElement('div');
                 d.className = 'player-tag' + (p.isEliminated ? ' eliminated' : '');
-                d.innerText = `플레이어 ${p.id}` + (p.isEliminated ? ' (탈락)' : '');
+                d.innerText = `플레이어 ${p.id}` + (p.isEliminated ? ' (제외됨)' : '');
                 if(!p.isEliminated) {
                     d.onclick = () => {
                         document.querySelectorAll('.player-tag').forEach(t => t.classList.remove('selected'));
@@ -201,31 +197,26 @@
             showScreen('step-action');
         }
 
-        function setStrategy(label, plus, minus) {
-            currentStrategy = { label, plus, minus };
+        function setStrategy(label, plus) {
+            currentStrategy = { label, plus };
             document.getElementById('chosen-strategy').innerText = label;
             document.getElementById('defense-instruction').innerText = "해명을 시작하세요.";
-            document.getElementById('defense-timer').innerText = "01:00";
-            
-            // 버튼 상태 초기화
             document.getElementById('def-start-btn').style.display = 'block';
             document.getElementById('def-skip-btn').style.display = 'none';
             document.getElementById('def-final-btn').style.display = 'none';
-            
+            document.getElementById('defense-timer').innerText = "01:00";
             showScreen('step-defense');
         }
 
         function startDefenseTimer() {
             document.getElementById('def-start-btn').style.display = 'none';
-            document.getElementById('def-skip-btn').style.display = 'block'; // 조기 종료 버튼 활성화
-            
+            document.getElementById('def-skip-btn').style.display = 'block';
             startTimer('defense-timer', 60, () => {
                 document.getElementById('def-skip-btn').style.display = 'none';
                 document.getElementById('def-final-btn').style.display = 'block';
             });
         }
 
-        // 변론 도중 버튼을 눌러 즉시 이동할 때
         function stopDefenseAndGo() {
             clearInterval(timer);
             goToFinalVote();
@@ -236,6 +227,7 @@
             showScreen('step-final');
         }
 
+        // 3. 서바이벌 결과 처리
         function processResult(isExecute) {
             const target = players[votedIndex];
             const isActuallyLiar = target.isLiar;
@@ -243,26 +235,27 @@
             if (isExecute) { 
                 if (isActuallyLiar) { 
                     score += currentStrategy.plus;
-                    showFinalEnd("검거 성공!", `플레이어 ${target.id}는 라이어였습니다! 회사가 위기를 넘겼습니다.`, true);
+                    showFinalEnd("라이어 검거 성공!", `플레이어 ${target.id}는 라이어였습니다! 위기를 막아냈습니다.`, true);
                 } else { 
                     target.isEliminated = true;
-                    score -= 40;
-                    const citizenCount = players.filter(p => !p.isEliminated && !p.isLiar).length;
+                    score -= 30;
+                    const aliveCount = players.filter(p => !p.isEliminated).length;
                     
-                    if (citizenCount <= 1) { 
+                    // 최후의 2명(라이어 포함)이 남을 때까지 루프
+                    if (aliveCount <= 2) { 
                         score -= 50;
-                        showFinalEnd("회사 파산 위기", `무고한 동료들을 모두 잃었습니다. 진짜 라이어는 플레이어 ${liarIndex+1}이었습니다.`, false);
+                        showFinalEnd("조직 붕괴 (패배)", `무고한 동료들을 너무 많이 잃었습니다. 진짜 라이어는 살아남았습니다.`, false);
                     } else {
-                        showRoundResult("시민 방출...", `플레이어 ${target.id}는 시민이었습니다. 남은 사람들끼리 다시 라이어를 추적합니다.`);
+                        showRoundResult("무고한 시민 방출", `플레이어 ${target.id}는 시민이었습니다. 남은 ${aliveCount}명이서 다시 시작합니다.`);
                     }
                 }
             } else { 
                 if (isActuallyLiar) {
                     score -= 20; 
-                    showRoundResult("라이어 생존", "아무도 방출되지 않았습니다. 라이어의 은폐로 조직 리스크가 커집니다.");
+                    showRoundResult("라이어 생존", "라이어를 놓쳤습니다. 팀 내 불신이 싹틉니다.");
                 } else {
                     score += 10; 
-                    showRoundResult("신뢰 유지", "무고한 시민을 지켜냈습니다. 다시 토론을 시작합니다.");
+                    showRoundResult("신뢰 유지", "무고한 시민을 지켜내며 팀워크를 다졌습니다.");
                 }
             }
             document.getElementById('score-display').innerText = score + "억";
@@ -279,7 +272,7 @@
             document.getElementById('reveal-status').innerText = status;
             document.getElementById('reveal-details').innerText = detail;
             document.getElementById('result-card').style.borderColor = success ? "#10b981" : "#ef4444";
-            document.getElementById('end-title').innerText = score >= 100 ? "🌟 위대한 팀" : "💀 무너진 팀";
+            document.getElementById('end-title').innerText = score >= 100 ? "🌟 혁신하는 팀" : "💀 쇠퇴하는 팀";
             showScreen('step-result');
         }
     </script>
