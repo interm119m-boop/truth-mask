@@ -25,6 +25,9 @@
         .highlight { color: #60a5fa; font-weight: bold; }
         .eliminated { text-decoration: line-through; color: #64748b; opacity: 0.5; cursor: default; }
 
+        /* 결과 이미지 스타일 */
+        .result-img { width: 100%; border-radius: 15px; margin-bottom: 20px; display: none; border: 1px solid #334155; }
+
         .footer-logo { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 100%; max-width: 450px; text-align: center; pointer-events: none; }
         .footer-logo img { max-width: 150px; height: auto; opacity: 0.8; }
     </style>
@@ -34,7 +37,7 @@
         <div class="score-box">
             <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px;">TRUST VALUE</div>
             <div id="score-display" style="font-size: 32px; font-weight: bold;">100억</div>
-            </div>
+        </div>
 
         <div id="step-setup" class="screen active">
             <h1 style="text-align: center; margin-top: 40px;">TRUTH MASK</h1>
@@ -108,6 +111,7 @@
         </div>
 
         <div id="step-result" class="screen">
+            <img id="result-visual" class="result-img" alt="진단 결과 이미지">
             <div id="result-card" class="card" style="border-width: 4px;">
                 <h2 id="reveal-status"></h2>
                 <p id="reveal-details" style="margin-bottom: 20px;"></p>
@@ -126,7 +130,16 @@
         let players = []; 
         let votedIndex = -1, currentPlayerIndex = 0;
         let score = 100, timer, currentStrategy = {};
-        let trustChance = 2; // 내부적으로만 기회를 계산합니다.
+        let trustChance = 2; 
+
+        // 이미지 경로 설정
+        const IMAGES = {
+            BYSTANDER: "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F1LCa5%2FdJMcacoInQE%2FAAAAAAAAAAAAAAAAAAAAAD9mBE5MlLpn1_f0o4UxVL9M0ggJyvG8u4OTqu7NIkgE%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3DJS5XcFDKtca0r87pD322yX%252FZLEA%253D",
+            INNOVATION: "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2F7rMA0%2FdJMcacoInQD%2FAAAAAAAAAAAAAAAAAAAAANlSXnlDO1AcXZjAJPRoo5yazpMPZImtkTri5IWnE796%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3D6NLJYwVOjGHKSDzDR1fcTcFrg9A%253D",
+            RISK: "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcHWpG6%2FdJMcabi37aQ%2FAAAAAAAAAAAAAAAAAAAAADZtz-bYRJjETjn5yo2eYDDt0vrKH3NJpqFWQYaO1lsX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3DcnW%252FjB5yfzAy%252Bxm04l0gdybCpK4%253D",
+            DECLINE: "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2Fco4XTI%2FdJMcabi37aO%2FAAAAAAAAAAAAAAAAAAAAAPY4xKYv-DdDW3CWYyH75L80WN3wI_MyR6oAXmy-tPiT%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3DnV1RmMVqJ%252BbktYO4plos7NOPc7k%253D",
+            COLLAPSE: "https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FcMQbrj%2FdJMcacoInQF%2FAAAAAAAAAAAAAAAAAAAAAFWfFvPBRiXmOqoTYrvKLHO_er484ZaEWpaG7B_C1kes%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3DrPcXJbgijjQX3GRr8yi81O6H5Mk%253D"
+        };
 
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -254,9 +267,7 @@
                 }
             } else { 
                 trustChance--;
-
                 if (trustChance < 0) {
-                    // 기회를 모두 소진하고 '아니오'를 누르면 방관 엔딩
                     showFinalEnd("상황을 방관하는 팀", "결정을 내리지 못하고 방관하는 사이 팀이 무너졌습니다.", false, true);
                 } else {
                     if (target.isLiar) score -= 20;
@@ -280,17 +291,35 @@
             
             let diagnosis = "";
             let color = "";
+            let imgUrl = "";
+            const visual = document.getElementById('result-visual');
 
             if (isBystander) {
                 diagnosis = "진단 결과: [상황을 방관하는 팀] 😶";
                 color = "#94a3b8"; 
+                imgUrl = IMAGES.BYSTANDER;
             } else {
-                if (score >= 80) { diagnosis = "진단 결과: [혁신하는 팀] 🌟"; color = "#10b981"; }
-                else if (score >= 60) { diagnosis = "진단 결과: [위험한 팀] ⚠️"; color = "#f59e0b"; }
-                else if (score >= 40) { diagnosis = "진단 결과: [쇠퇴하는 팀] 📉"; color = "#f87171"; }
-                else { diagnosis = "진단 결과: [팀 붕괴] 💀"; color = "#ef4444"; }
+                if (score >= 80) { 
+                    diagnosis = "진단 결과: [혁신하는 팀] 🌟"; 
+                    color = "#10b981"; 
+                    imgUrl = IMAGES.INNOVATION;
+                } else if (score >= 60) { 
+                    diagnosis = "진단 결과: [위험한 팀] ⚠️"; 
+                    color = "#f59e0b"; 
+                    imgUrl = IMAGES.RISK;
+                } else if (score >= 40) { 
+                    diagnosis = "진단 결과: [쇠퇴하는 팀] 📉"; 
+                    color = "#f87171"; 
+                    imgUrl = IMAGES.DECLINE;
+                } else { 
+                    diagnosis = "진단 결과: [팀 붕괴] 💀"; 
+                    color = "#ef4444"; 
+                    imgUrl = IMAGES.COLLAPSE;
+                }
             }
 
+            visual.src = imgUrl;
+            visual.style.display = "block";
             document.getElementById('team-diagnosis').innerText = diagnosis;
             document.getElementById('team-diagnosis').style.color = color;
             document.getElementById('result-card').style.borderColor = color;
