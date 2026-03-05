@@ -125,9 +125,10 @@
         <div id="step-result" class="screen">
             <div id="result-card" class="card" style="border-width: 4px;">
                 <h2 id="reveal-status"></h2>
-                <p id="reveal-details"></p>
+                <p id="reveal-details" style="margin-bottom: 20px;"></p>
+                <hr style="border: 0; border-top: 1px solid #334155; margin-bottom: 20px;">
+                <h3 id="team-diagnosis" style="color: #60a5fa;"></h3>
             </div>
-            <h2 id="end-title" style="text-align: center;"></h2>
             <button class="btn" onclick="location.reload()">새 게임 시작</button>
         </div>
 
@@ -289,8 +290,29 @@
         function showFinalEnd(status, detail, success) {
             document.getElementById('reveal-status').innerText = status;
             document.getElementById('reveal-details').innerText = detail;
-            document.getElementById('result-card').style.borderColor = success ? "#10b981" : "#ef4444";
-            document.getElementById('end-title').innerText = score >= 100 ? "🌟 혁신하는 팀" : "💀 쇠퇴하는 팀";
+            
+            // 점수 기반 팀 진단 로직
+            let diagnosis = "";
+            let color = "";
+
+            if (score >= 80) {
+                diagnosis = "진단 결과: [혁신하는 팀] 🌟";
+                color = "#10b981"; // 초록
+            } else if (score >= 60) {
+                diagnosis = "진단 결과: [위험한 팀] ⚠️";
+                color = "#f59e0b"; // 주황
+            } else if (score >= 40) {
+                diagnosis = "진단 결과: [쇠퇴하는 팀] 📉";
+                color = "#f87171"; // 연빨강
+            } else {
+                diagnosis = "진단 결과: [팀 붕괴] 💀";
+                color = "#ef4444"; // 진빨강
+            }
+
+            document.getElementById('team-diagnosis').innerText = diagnosis;
+            document.getElementById('team-diagnosis').style.color = color;
+            document.getElementById('result-card').style.borderColor = color;
+            
             showScreen('step-result');
         }
     </script>
