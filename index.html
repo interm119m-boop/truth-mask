@@ -6,20 +6,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body { background-color: #0f172a; color: white; font-family: -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; }
-        #app { width: 100%; max-width: 450px; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        #app { width: 100%; max-width: 450px; min-height: 100vh; padding: 20px; padding-bottom: 100px; box-sizing: border-box; position: relative; }
+        
         .screen { display: none; flex-direction: column; width: 100%; }
         .screen.active { display: flex; }
         .card { background: #1e293b; border-radius: 20px; padding: 25px; margin-bottom: 20px; border: 1px solid #334155; text-align: center; }
+        
         .btn { background: #2563eb; color: white; border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 12px; font-size: 16px; transition: 0.2s; }
         .btn:active { background: #1d4ed8; transform: scale(0.98); }
         .btn-secondary { background: #475569; text-align: center; }
+        
         .score-box { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 15px; margin-bottom: 30px; }
         .timer { font-size: 60px; font-weight: bold; margin: 20px 0; color: #f87171; text-align: center; font-family: monospace; }
         .instruction { color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5; text-align: center; }
+        
         .player-tag { background: #334155; padding: 15px; border-radius: 10px; margin-bottom: 10px; font-weight: bold; border: 1px solid transparent; text-align: center; cursor: pointer; }
         .player-tag.selected { border-color: #3b82f6; background: #1e293b; color: #60a5fa; }
         .highlight { color: #60a5fa; font-weight: bold; }
         .eliminated { text-decoration: line-through; color: #64748b; opacity: 0.5; cursor: default; }
+
+        /* 하단 로고 스타일 */
+        .footer-logo {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            pointer-events: none; /* 클릭 방해 금지 */
+        }
+        .footer-logo img {
+            max-width: 150px; /* 로고 크기 조절 */
+            height: auto;
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +73,6 @@
         <div id="step-discuss" class="screen">
             <h2 id="round-title" style="text-align: center; font-size: 18px;">토론 라운드</h2>
             <div id="discuss-timer" class="timer">02:00</div>
-            <p class="instruction">자유롭게 대화하며 라이어를 추리하세요.</p>
             <button class="btn" onclick="goToVote()">의심 지목하기</button>
         </div>
 
@@ -63,16 +83,16 @@
         </div>
 
         <div id="step-action" class="screen">
-            <h2 style="text-align: center;">대응 방식</h2>
+            <h2 style="text-align: center;">대응 방식 결정</h2>
             <p class="instruction"><span id="voted-name" class="highlight"></span>님에 대한 팀의 태도는?</p>
             <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('RESPECT', 50)">
-                <span style="color:#60a5fa">신뢰 기반 피드백</span><br><small>비난 없이 진실된 소통을 요청합니다.</small>
+                <span style="color:#60a5fa">신뢰 기반 피드백</span><br><small>솔직한 상황 공유를 정중히 요청합니다.</small>
             </button>
             <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('DIRECT', 30)">
-                <span style="color:#60a5fa">데이터 중심 검증</span><br><small>객관적인 근거와 논리를 요구합니다.</small>
+                <span style="color:#60a5fa">데이터 중심 검증</span><br><small>객관적인 근거 자료를 요구합니다.</small>
             </button>
             <button class="btn" style="background:#1e293b; border:1px solid #3b82f6; text-align:left;" onclick="setStrategy('SILENCE', 0)">
-                <span style="color:#60a5fa">침묵과 방관</span><br><small>갈등을 피하기 위해 일단 수용합니다.</small>
+                <span style="color:#60a5fa">침묵과 방관</span><br><small>일단 믿어주고 넘어가기로 합니다.</small>
             </button>
         </div>
 
@@ -83,14 +103,14 @@
                 <div id="defense-timer" class="timer">01:00</div>
                 <p id="defense-instruction" style="font-weight: bold;"></p>
             </div>
-            <button id="def-start-btn" class="btn" onclick="startDefenseTimer()">변론 시작</button>
+            <button id="def-start-btn" class="btn" onclick="startDefenseTimer()">타이머 시작</button>
             <button id="def-skip-btn" class="btn btn-secondary" style="display:none;" onclick="stopDefenseAndGo()">변론 조기 종료</button>
             <button id="def-final-btn" class="btn" style="display:none;" onclick="goToFinalVote()">변론 완료 (결정)</button>
         </div>
 
         <div id="step-final" class="screen">
             <h2 style="text-align: center;">최종 결정</h2>
-            <div class="card"><p><span id="final-target" class="highlight"></span>님을 팀에서 제외할까요?</p></div>
+            <div class="card"><p><span id="final-target" class="highlight"></span>님을 내보내시겠습니까?</p></div>
             <button class="btn" onclick="processResult(true)">예 (방출)</button>
             <button class="btn btn-secondary" onclick="processResult(false)">아니오 (기회 부여)</button>
         </div>
@@ -100,7 +120,7 @@
                 <h2 id="round-status"></h2>
                 <p id="round-detail"></p>
             </div>
-            <button class="btn" onclick="nextRound()">다음 라운드 시작</button>
+            <button class="btn" onclick="nextRound()">다음 라운드 계속</button>
         </div>
 
         <div id="step-result" class="screen">
@@ -108,12 +128,16 @@
                 <h2 id="reveal-status"></h2>
                 <p id="reveal-details"></p>
             </div>
-            <h2 id="end-title" style="text-align: center;"></h2>
-            <button class="btn" onclick="location.reload()">처음으로 돌아가기</button>
+            <button class="btn" onclick="location.reload()">새 게임 시작</button>
+        </div>
+
+        <div class="footer-logo">
+            <img src="https://img1.daumcdn.net/thumb/R1280x0/?scode=mtistory2&fname=https%3A%2F%2Fblog.kakaocdn.net%2Fdna%2FOXl8z%2FdJMcahXQ4U0%2FAAAAAAAAAAAAAAAAAAAAAHHiLcWZQkVPFw8vsCIDJMBG_R_kTSLruaxg9CK_YIOX%2Fimg.png%3Fcredential%3DyqXZFxpELC7KVnFOS48ylbz2pIh7yKj8%26expires%3D1774969199%26allow_ip%3D%26allow_referer%3D%26signature%3Da1LSbIG5n3nfrApoj6S1AinQQmw%253D" alt="Company Logo">
         </div>
     </div>
 
     <script>
+        // 자바스크립트 로직은 이전과 동일 (생략 없이 전체 포함)
         let players = []; 
         let votedIndex = -1, currentPlayerIndex = 0;
         let score = 100, timer, currentStrategy = {};
@@ -123,7 +147,6 @@
             document.getElementById(id).classList.add('active');
         }
 
-        // 1. 완벽 랜덤 셋업
         function setupGame(n) {
             const roles = new Array(n).fill('CITIZEN');
             roles[Math.floor(Math.random() * n)] = 'LIAR';
@@ -152,7 +175,6 @@
             }
         }
 
-        // 2. 라운드 루프 시스템
         function nextRound() {
             const aliveCount = players.filter(p => !p.isEliminated).length;
             document.getElementById('round-title').innerText = `토론 라운드 (생존: ${aliveCount}명)`;
@@ -227,7 +249,6 @@
             showScreen('step-final');
         }
 
-        // 3. 서바이벌 결과 처리
         function processResult(isExecute) {
             const target = players[votedIndex];
             const isActuallyLiar = target.isLiar;
@@ -240,8 +261,6 @@
                     target.isEliminated = true;
                     score -= 30;
                     const aliveCount = players.filter(p => !p.isEliminated).length;
-                    
-                    // 최후의 2명(라이어 포함)이 남을 때까지 루프
                     if (aliveCount <= 2) { 
                         score -= 50;
                         showFinalEnd("조직 붕괴 (패배)", `무고한 동료들을 너무 많이 잃었습니다. 진짜 라이어는 살아남았습니다.`, false);
@@ -272,7 +291,6 @@
             document.getElementById('reveal-status').innerText = status;
             document.getElementById('reveal-details').innerText = detail;
             document.getElementById('result-card').style.borderColor = success ? "#10b981" : "#ef4444";
-            document.getElementById('end-title').innerText = score >= 100 ? "🌟 혁신하는 팀" : "💀 쇠퇴하는 팀";
             showScreen('step-result');
         }
     </script>
